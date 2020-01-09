@@ -1,0 +1,17 @@
+{
+  "name": "workflow",
+  "version": "1.0.0",
+  "description": "A tool that adds convenient commands to the command line.",
+  "main": "index.js",
+  "bin": {
+    "wf": "bin/workflow"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anthony Autrey",
+  "license": "ISC",
+  "dependencies": {
+    "esm": "~3.2.25"
+  }
+}
