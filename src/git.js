@@ -13,7 +13,7 @@ export function cli(systemArgs) {
     let command = args[0];
     if (command == 'commitall')
       commitall(secondaryArgs)
-    if (command == 'pushall')
+    else if (command == 'pushall')
       pushall(secondaryArgs)
     else
       console.log('Error: Unknown command');
