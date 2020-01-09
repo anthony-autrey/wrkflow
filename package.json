@@ -1,6 +1,6 @@
 {
   "name": "wrkflow",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tool that adds convenient commands to the command line.",
   "main": "index.js",
   "bin": {
