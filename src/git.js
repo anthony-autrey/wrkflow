@@ -1,4 +1,9 @@
 const { exec } = require('child_process');
+const readline = require("readline");
+const input = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
 export function cli(systemArgs) {
   try {
@@ -31,8 +36,11 @@ function pushall(args) {
 
   if (args.length !== 1)
     console.log('Error: Too many arguments. Please ensure your commit message is surrounded by quotes.')
-  else
-    runCommand(`git add -A && git commit -m "${message}" && git push`)
+    else {
+      input.question('Please enter your ssh password', response => {
+        runCommand(`git add -A && git commit -m "${message}" && git push`)
+      })
+    }
 }
 
 function runCommand(command) {
