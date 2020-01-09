@@ -19,7 +19,7 @@ function commitall(args) {
   if (args.length !== 1)
     console.log('Error: Too many arguments. Please ensure your commit message is surrounded by quotes.')
   else
-    runCommand(`git add -A && git commit -m ${message}`)
+    runCommand(`git add -A && git commit -m "${message}"`)
 }
 
 function runCommand(command) {
