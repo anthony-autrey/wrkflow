@@ -47,8 +47,10 @@ function runCommand(command) {
     if (err) {
       console.error(err)
     } else {
-    console.log(`${stdout}`);
-    console.log(`${stderr}`);
+      console.log(`${stdout}`);
+      console.log(`${stderr}`);
     }
+    process.exit();
   });
+
 }
