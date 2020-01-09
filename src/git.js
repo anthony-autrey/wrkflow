@@ -29,8 +29,8 @@ function runCommand(command) {
       console.error(err)
     } else {
     // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`);
-    console.log(`stderr: ${stderr}`);
+    console.log(`${stdout}`);
+    console.log(`${stderr}`);
     }
   });
 }
