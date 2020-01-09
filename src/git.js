@@ -18,8 +18,9 @@ export function cli(systemArgs) {
     else
       console.log('Error: Unknown command');
   } catch (error) {
+    console.log('Uncaught Error:')
+    console.log('_____________________________________')
     console.log(error)
-    console.log('error: invalid arguments')
   }
 }
 
