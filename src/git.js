@@ -15,6 +15,8 @@ export function cli(systemArgs) {
       commitall(secondaryArgs)
     else if (command == 'pushall')
       pushall(secondaryArgs)
+    else if (command == 'init')
+      init()
     else
       console.log('Error: Unknown command');
   } catch (error) {
@@ -41,6 +43,14 @@ function pushall(args) {
     else {
       runCommand(`git add -A && git commit -m "${message}" && git push`)
     }
+}
+
+function init() {
+  input.question('Enter a repo name: ', name => {
+    input.question('Enter a remote url: ', url => {
+      runCommand(`mkdir ${name} && cd ${name} && git init && git remote add origin ${url} && git pull`)
+    })
+  })
 }
 
 function runCommand(command) {
