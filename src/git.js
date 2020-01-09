@@ -48,7 +48,11 @@ function pushall(args) {
 function init() {
   input.question('Enter a repo name: ', name => {
     input.question('Enter a remote url: ', url => {
+<<<<<<< HEAD
       runCommand(`mkdir ${name} && cd ${name} && git init && git remote add origin ${url} && git pull origin master`)
+=======
+      runCommand(`mkdir ${name} && cd ${name} && git init && git remote add origin ${url} && git pull`)
+>>>>>>> parent of 0b9f0b2... did bad things
     })
   })
 }
