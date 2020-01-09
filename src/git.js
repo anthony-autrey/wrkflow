@@ -1,4 +1,5 @@
 const exec = require('child_process').exec;
+
 const readline = require("readline");
 const input = readline.createInterface({
     input: process.stdin,
@@ -46,8 +47,8 @@ function runCommand(command) {
     if (err) {
       console.error(err)
     } else {
-      console.log(`${stdout}`);
-      console.log(`${stderr}`);
+    console.log(`${stdout}`);
+    console.log(`${stderr}`);
     }
   });
 }
