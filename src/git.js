@@ -38,7 +38,7 @@ export function cli(systemArgs) {
 
 function getCommandClosestMatch(command) {
   if (!command) {
-    console.log('Error: No command given')
+    console.log('Error: No command given.')
     console.log('Try one of the following: ' + primaryCommands)
     process.exit();
   }
@@ -48,12 +48,12 @@ function getCommandClosestMatch(command) {
   Array.from(command).forEach(letter => {
     letters += letter;
     matches = matches.filter(match => {
-      return match.includes(letters);
+      return match.substring(0, letters.length) == letters;
     })
   })
 
   if (matches.length <= 0) {
-    console.log('Error: Unknown command')
+    console.log('Error: Unknown command.')
     console.log('Try one of the following: ' + primaryCommands)
     process.exit();
   } else if (matches.length > 1) {
@@ -100,7 +100,7 @@ async function init() {
       return status >= 200 && status < 300; // default
     },
   }).catch(error => {
-    console.log('Error: Couldn\'t create repo')
+    console.log('Error: Couldn\'t create repo.')
     process.exit();
   });
 
@@ -115,7 +115,7 @@ async function clone(secondaryArgs) {
       return status >= 200 && status < 300;
     },
   }).catch(error => {
-    console.log('Error: Couldn\'t get list of repos')
+    console.log('Error: Couldn\'t get list of repos.')
     process.exit();
   });
 
@@ -131,7 +131,7 @@ async function clone(secondaryArgs) {
     let index = repos.indexOf(repo)
     let url = urls[index];
     if (fs.existsSync(repo)) {
-      console.log('Error: That repo already exists here')
+      console.log('Error: That repo already exists here.')
       process.exit();
     }
     await runCommand(`git clone ${url}`)
@@ -152,7 +152,7 @@ async function searchRepos(secondaryArgs) {
   let query = buildSearchQuery(secondaryArgs);
   let token = await getPersonalAccessToken();
   let response = await axios.get(`https://api.github.com/search/repositories?q=${query}&access_token=${token}`).catch(error => {
-    console.log('Error: Couldn\'t get list of repos')
+    console.log('Error: Couldn\'t get list of repos.')
     // console.log(error.response.statusText)
     process.exit();
   });
@@ -177,7 +177,7 @@ async function searchRepos(secondaryArgs) {
   let selectedAction = await getInputFromList('What do you want to do with this repo?:', actionChoices);
   if (selectedAction == 'Clone here') {
     if (fs.existsSync(selectedRepoInfo.name)) {
-      console.log('Error: That repo already exists here')
+      console.log('Error: That repo already exists here.')
       process.exit();
     }
     await runCommand(`git clone ${selectedRepoInfo.url}`)
