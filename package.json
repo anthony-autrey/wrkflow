@@ -4,7 +4,8 @@
   "description": "A tool that adds convenient commands to the command line.",
   "main": "index.js",
   "bin": {
-    "wgit": "bin/wgit"
+    "wgit": "bin/wgit",
+    "wk": "bin/wk"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
