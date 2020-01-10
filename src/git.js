@@ -1,4 +1,5 @@
 const exec = require('child_process').exec;
+const axios = require('axios');
 
 const readline = require("readline");
 const input = readline.createInterface({
@@ -17,6 +18,8 @@ export function cli(systemArgs) {
       pushall(secondaryArgs)
     else if (command == 'init')
       init()
+    else if (command == 'clone')
+      clone(secondaryArgs)
     else
       console.log('Error: Unknown command');
   } catch (error) {
@@ -51,6 +54,31 @@ function init() {
       runCommand(`mkdir ${name} && cd ${name} && git init && git remote add origin ${url} && git pull && git pull origin master`)
     })
   })
+}
+
+function clone(secondaryArgs) {
+  let doClone = async path => {
+    let response = await axios.get(`https://api.github.com/repos/${path}`).catch(error => {
+        console.log('Error: Repo not found.');
+        process.exit();
+      });
+      let name = response.data.name;
+      let url = response.data.git_url;
+      runCommand(`git clone ${url} && cd ${name} && [ -f ./package.json ] && npm install`)
+  }
+
+  if (secondaryArgs.length <= 0) {
+    input.question('Enter the repo path (<username>/<repo>): ', async path => {
+      doClone(path);
+    });
+  } else if (secondaryArgs.length == 1) {
+    let path = secondaryArgs[0];
+      doClone(path);
+  } else {
+    console.log('Error: Too many arguments')
+    process.exit();
+  }
+
 }
 
 function runCommand(command) {

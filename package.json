@@ -13,6 +13,7 @@
   "author": "Anthony Autrey",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.19.1",
     "esm": "~3.2.25"
   }
 }
