@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const exec = require('child_process').exec;
 
 export function cli(systemArgs) {
@@ -23,8 +25,10 @@ function cdnew(args) {
 
     if (args.length !== 1)
         console.log('Error: Too many arguments.')
-    else
-        runCommand(`mkdir ${dir} && cd ${dir}`)
+    else {
+      fs.mkdirSync(dir);
+      process.chdir(dir);
+    }
 }
 
 async function runCommand(command, cancelExit) {

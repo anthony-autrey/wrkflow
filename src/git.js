@@ -3,11 +3,20 @@ const axios = require('axios');
 const fs = require('fs');
 const input = require('inquirer');
 
+const primaryCommands = [
+  'commitall',
+  'pushall',
+  'init',
+  'clone',
+  'searchrepos'
+]
+
 export function cli(systemArgs) {
   try {
     let args = systemArgs.slice(2);
     let secondaryArgs = systemArgs.slice(3);
-    let command = args[0];
+    let command = getCommandClosestMatch(args[0]);
+
     if (command == 'commitall')
       commitall(secondaryArgs)
     else if (command == 'pushall')
@@ -16,6 +25,8 @@ export function cli(systemArgs) {
       init()
     else if (command == 'clone')
       clone(secondaryArgs)
+    else if (command == 'searchrepos')
+      searchRepos(secondaryArgs)
     else
       console.log('Error: Unknown command');
   } catch (error) {
@@ -23,6 +34,34 @@ export function cli(systemArgs) {
     console.log('_____________________________________')
     console.log(error)
   }
+}
+
+function getCommandClosestMatch(command) {
+  if (!command) {
+    console.log('Error: No command given')
+    console.log('Try one of the following: ' + primaryCommands)
+    process.exit();
+  }
+
+  let matches = primaryCommands;
+  let letters = ''
+  Array.from(command).forEach(letter => {
+    letters += letter;
+    matches = matches.filter(match => {
+      return match.includes(letters);
+    })
+  })
+
+  if (matches.length <= 0) {
+    console.log('Error: Unknown command')
+    console.log('Try one of the following: ' + primaryCommands)
+    process.exit();
+  } else if (matches.length > 1) {
+    console.log('Error: Ambiguous command. Did you mean ' + matches + '?')
+    process.exit();
+  }
+
+  return matches[0];
 }
 
 function commitall(args) {
@@ -34,26 +73,19 @@ function commitall(args) {
     runCommand(`git add -A && git commit -m "${message}"`)
 }
 
-function pushall(args) {
+async function pushall(args) {
   let message = args[0];
 
-  if (args.length !== 1)
-    console.log('Error: Too many arguments. Please ensure your commit message is surrounded by quotes.')
-    else {
-      runCommand(`git add -A && git commit -m "${message}" && git push`)
-    }
+  if (args.length !== 1) {
+    message = await getInput('Please enter a commit message:')
+  }
+
+  runCommand(`git add -A && git commit -m "${message}" && git push`)
 }
 
 async function init() {
   let name = await getInput('Enter a repo name:');
-  let token = await getPersonalAccessToken().catch(error => {
-    if (error == 'declined token')
-      console.log('You must establish a GitHub Personal Access Token to use the init function')
-    else
-      console.log('Error: Couldn\'t obtain GitHub Personal Access Token');
-    process.exit();
-  });
-  
+  let token = await getPersonalAccessToken();
   let description = await getInput('Enter a description:');
   let repoIsPublic = await getConfirmation('Should the repo be public?');
   let response = await axios.post(`https://api.github.com/user/repos?access_token=${token}`, {
@@ -69,18 +101,12 @@ async function init() {
     process.exit();
   });
 
-  let url = response.data.git_url
+  let url = response.data.ssh_url
   runCommand(`git clone ${url}`)
 }
 
 async function clone(secondaryArgs) {
-  let token = await getPersonalAccessToken().catch(error => {
-    if (error == 'declined token')
-      console.log('You must establish a GitHub Personal Access Token to use the init function')
-    else
-      console.log('Error: Couldn\'t obtain GitHub Personal Access Token');
-    process.exit();
-  });
+  let token = await getPersonalAccessToken();
   let response = await axios.get(`https://api.github.com/user/repos?access_token=${token}`, {
     validateStatus: function (status) {
       return status >= 200 && status < 300;
@@ -94,7 +120,7 @@ async function clone(secondaryArgs) {
   let urls = [];
   response.data.forEach(repo => {
     repos.push(repo.name)
-    urls.push(repo.git_url)
+    urls.push(repo.ssh_url)
   })
 
   if (repos.length > 0) {
@@ -110,6 +136,58 @@ async function clone(secondaryArgs) {
     Console.log('Couldn\'t find any repos')
     process.exit();
   }
+}
+
+async function searchRepos(secondaryArgs) {
+  if (secondaryArgs.length <= 0) {
+    console.log('Search queries may include qualifiers. Examples:')
+    console.log('user:anthony-autrey org:centurylink language:javascript is:public stars:>=100')
+    let input = await getInput('Enter a search query:')
+    secondaryArgs = input.split(' ')
+  }
+
+  let query = buildSearchQuery(secondaryArgs);
+  let token = await getPersonalAccessToken();
+  let response = await axios.get(`https://api.github.com/search/repositories?q=${query}&access_token=${token}`).catch(error => {
+    console.log('Error: Couldn\'t get list of repos')
+    // console.log(error.response.statusText)
+    process.exit();
+  });
+
+  let repos = [];
+  response.data.items.forEach(repo => {
+    repos.push({name: repo.full_name, url: repo.ssh_url})
+  })
+
+  if (repos.length <= 0) {
+    console.log('No search results found.')
+    return;
+  }
+
+  console.log(`${repos.length} repos found.`)
+  let repoChoices = repos.map(repo => { return repo.name });
+  let selectedRepo = await getInputFromList('Select a repo from the list:', repoChoices);
+  let selectedRepoInfo = repos.find(repo => {
+    return repo.name == selectedRepo;
+  })
+  let actionChoices = ['Clone here', 'Cancel']
+  let selectedAction = await getInputFromList('What do you want to do with this repo?:', actionChoices);
+  if (selectedAction == 'Clone here') {
+    if (fs.existsSync(selectedRepoInfo.name)) {
+      console.log('Error: That repo already exists here')
+      process.exit();
+    }
+    await runCommand(`git clone ${selectedRepoInfo.url}`)
+  }
+}
+
+function buildSearchQuery(args) {
+  let queryString = ''
+  args.forEach(arg => {
+    queryString += arg + '+'
+  });
+
+  return encodeURI(queryString)
 }
 
 async function writeConfigFile(filename, contents) {
@@ -132,7 +210,7 @@ function getConfig(file) {
   return fs.readFileSync(`${process.env.HOME}/.wgit_config/${file}`, {encoding: 'ascii'});
 }
 
-async function getPersonalAccessToken() {
+async function getPersonalAccessTokenWithPrompts() {
   let tokenExists = configExists('github_personal_access_token');
   if (tokenExists) {
     let token = getConfig('github_personal_access_token');
@@ -147,6 +225,18 @@ async function getPersonalAccessToken() {
     } else
       return Promise.reject('declined token')
   }
+}
+
+async function getPersonalAccessToken() {
+  let token = await getPersonalAccessTokenWithPrompts().catch(error => {
+    if (error == 'declined token')
+      console.log('You must establish a GitHub Personal Access Token to use the init function')
+    else
+      console.log('Error: Couldn\'t obtain GitHub Personal Access Token');
+    process.exit();
+  });
+
+  return Promise.resolve(token);
 }
 
 async function getGitHubUsername() {
@@ -166,7 +256,7 @@ async function getGitHubUsername() {
 }
 
 async function runCommand(command, cancelExit) {
-  exec(command, (err, stdout, stderr) => {
+  exec(command, { env: process.env }, (err, stdout, stderr) => {
     if (err) {
       console.log(err)
     } else {
