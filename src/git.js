@@ -118,6 +118,9 @@ async function init() {
     },
   }).catch(error => {
     console.log('Error: Couldn\'t create repo.')
+    let token = getConfig('github_personal_access_token')
+    if (token == '')
+      console.log('You need to establish a GitHub Personal Access Token with the \'wgit settoken\' command.')
     process.exit();
   });
 
@@ -133,6 +136,9 @@ async function clone(secondaryArgs) {
     },
   }).catch(error => {
     console.log('Error: Couldn\'t get list of repos.')
+    let token = getConfig('github_personal_access_token')
+    if (token == '')
+      console.log('You need to establish a GitHub Personal Access Token with the \'wgit settoken\' command.')
     process.exit();
   });
 
@@ -170,7 +176,6 @@ async function searchRepos(secondaryArgs) {
   let token = await getPersonalAccessToken();
   let response = await axios.get(`https://api.github.com/search/repositories?q=${query}&access_token=${token}`).catch(error => {
     console.log('Error: Couldn\'t get list of repos.')
-    // console.log(error.response.statusText)
     process.exit();
   });
 
@@ -181,7 +186,7 @@ async function searchRepos(secondaryArgs) {
 
   if (repos.length <= 0) {
     console.log('No search results found.')
-    return;
+    process.exit();
   }
 
   console.log(`${repos.length} repos found.`)
@@ -222,14 +227,19 @@ function buildSearchQuery(args) {
 }
 
 async function writeConfigFile(filename, contents) {
-  await fs.mkdirSync(`${process.env.HOME}/.wgit_config`, { recursive: true })
+  fs.mkdirSync(`${process.env.HOME}/.wgit_config`, { recursive: true })
+  if (contents == '') {
+    fs.closeSync(fs.openSync(`${process.env.HOME}/.wgit_config/${filename}`, 'w'))
+    return Promise.resolve('')
+  }
+
   fs.writeFile(`${process.env.HOME}/.wgit_config/${filename}`, contents, error => {
     console.log(error)
 
     if (error)
-      return Promise.reject('Error: Couldn\'t write to file.');
+      Promise.reject('Error: Couldn\'t write to file.');
     else
-      return Promise.resolve();
+      Promises.resolve(contents);
   })
 }
 
@@ -244,28 +254,38 @@ function getConfig(file) {
 async function takePersonalAccessTokenInput() {
   console.log('  Go to GitHub.com > User Settings > Developer Settings to create a Personal Access Token');
   let token = await getInput('Enter your Personal Access Token:')
-  await writeConfigFile('github_personal_access_token', token).catch(error => console.log(error));
+  await writeConfigFile('github_personal_access_token', token).catch(error => {});
 
   return Promise.resolve(token);
 }
 
-async function getPersonalAccessTokenWithPrompts() {
+async function getPersonalAccessTokenIfNotEstablished() {
   let tokenExists = configExists('github_personal_access_token');
   if (tokenExists) {
     let token = getConfig('github_personal_access_token');
     return Promise.resolve(token);
   } else {
-    let getToken = await getConfirmation('You haven\'t registered a GitHub Personal Access Token. Do you want to now?')
-    if (getToken) {
-      let token = await takePersonalAccessTokenInput();
-      return Promise.resolve(token);
-    } else
-      return Promise.reject('declined token')
+      return getPersonalAccessTokenWithPrompts();
+  }
+}
+
+async function getPersonalAccessTokenWithPrompts() {
+  let getToken = await getConfirmation('You haven\'t registered a GitHub Personal Access Token. Do you want to now?')
+  if (getToken) {
+    let token = await takePersonalAccessTokenInput();
+    return Promise.resolve(token);
+  } else {
+    console.log('You declined using a Personal Access Token. This means you\'ll only have anonymous access to the GitHub API.');
+    console.log('To change your token later, use the \'wgit settoken\' command.');
+    let token = await writeConfigFile('github_personal_access_token', '').catch(error => {
+      console.log(error)
+    });
+    return Promise.resolve(token);
   }
 }
 
 async function getPersonalAccessToken() {
-  let token = await getPersonalAccessTokenWithPrompts().catch(error => {
+  let token = await getPersonalAccessTokenIfNotEstablished().catch(error => {
     if (error == 'declined token')
       console.log('You must establish a GitHub Personal Access Token for this command')
     else
@@ -278,15 +298,14 @@ async function getPersonalAccessToken() {
 }
 
 async function setToken() {
-  if (configExists('github_personal_access_token')) {
+  if (configExists('github_personal_access_token') && getConfig('github_personal_access_token') !== '') {
     if (await getConfirmation('You\'ve already set a GitHub Personal Access Token. Do you want to replace it?'))
       await takePersonalAccessTokenInput();
     else
       await getPersonalAccessToken();
-
     process.exit();
   } else {
-    await getPersonalAccessToken();
+    await takePersonalAccessTokenInput();
   }
 }
 
