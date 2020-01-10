@@ -8,7 +8,8 @@ const primaryCommands = [
   'pushall',
   'init',
   'clone',
-  'searchrepos'
+  'searchrepos',
+  'settoken'
 ]
 
 export function cli(systemArgs) {
@@ -27,6 +28,8 @@ export function cli(systemArgs) {
       clone(secondaryArgs)
     else if (command == 'searchrepos')
       searchRepos(secondaryArgs)
+    else if (command == 'settoken')
+      setToken(secondaryArgs)
     else
       console.log('Error: Unknown command');
   } catch (error) {
@@ -173,7 +176,7 @@ async function searchRepos(secondaryArgs) {
   let selectedRepoInfo = repos.find(repo => {
     return repo.name == selectedRepo;
   })
-  let actionChoices = ['Clone here', 'Cancel']
+  let actionChoices = ['Clone here', 'Delete', 'Cancel']
   let selectedAction = await getInputFromList('What do you want to do with this repo?:', actionChoices);
   if (selectedAction == 'Clone here') {
     if (fs.existsSync(selectedRepoInfo.name)) {
@@ -181,6 +184,17 @@ async function searchRepos(secondaryArgs) {
       process.exit();
     }
     await runCommand(`git clone ${selectedRepoInfo.url}`)
+  } else if (selectedAction == 'Delete') {
+    let typedConfirmation = await getInput(`To confirm deletion, type the full name of the repo: (${selectedRepoInfo.name}) THIS CANNOT BE UNDONE!`);
+    if (typedConfirmation == selectedRepoInfo.name) {
+      axios.delete(`https://api.github.com/repos/${selectedRepoInfo.name}?access_token=${token}`).then(() => {
+        console.log('Successfully deleted repo.')
+      }).catch(error => {
+        console.log('Error: ' + error.response.statusText)
+      })
+    } else {
+      console.log('Names didn\'t match. Aborting.')
+    }
   }
 }
 
@@ -213,6 +227,14 @@ function getConfig(file) {
   return fs.readFileSync(`${process.env.HOME}/.wgit_config/${file}`, {encoding: 'ascii'});
 }
 
+async function takePersonalAccessTokenInput() {
+  console.log('  Go to GitHub.com > User Settings > Developer Settings to create a Personal Access Token');
+  let token = await getInput('Enter your Personal Access Token:')
+  await writeConfigFile('github_personal_access_token', token).catch(error => console.log(error));
+
+  return Promise.resolve(token);
+}
+
 async function getPersonalAccessTokenWithPrompts() {
   let tokenExists = configExists('github_personal_access_token');
   if (tokenExists) {
@@ -221,9 +243,7 @@ async function getPersonalAccessTokenWithPrompts() {
   } else {
     let getToken = await getConfirmation('You haven\'t registered a GitHub Personal Access Token. Do you want to now?')
     if (getToken) {
-      console.log('  Go to GitHub.com > User Settings > Developer Settings to create a Personal Access Token');
-      let token = await getInput('Enter your Personal Access Token:')
-      await writeConfigFile('github_personal_access_token', token).catch(error => console.log(error));
+      let token = await takePersonalAccessTokenInput();
       return Promise.resolve(token);
     } else
       return Promise.reject('declined token')
@@ -233,13 +253,27 @@ async function getPersonalAccessTokenWithPrompts() {
 async function getPersonalAccessToken() {
   let token = await getPersonalAccessTokenWithPrompts().catch(error => {
     if (error == 'declined token')
-      console.log('You must establish a GitHub Personal Access Token to use the init function')
+      console.log('You must establish a GitHub Personal Access Token for this command')
     else
       console.log('Error: Couldn\'t obtain GitHub Personal Access Token');
+
     process.exit();
   });
 
   return Promise.resolve(token);
+}
+
+async function setToken() {
+  if (configExists('github_personal_access_token')) {
+    if (await getConfirmation('You\'ve already set a GitHub Personal Access Token. Do you want to replace it?'))
+      await takePersonalAccessTokenInput();
+    else
+      await getPersonalAccessToken();
+
+    process.exit();
+  } else {
+    await getPersonalAccessToken();
+  }
 }
 
 async function getGitHubUsername() {
