@@ -64,13 +64,15 @@ function getCommandClosestMatch(command) {
   return matches[0];
 }
 
-function commitall(args) {
+async function commitall(args) {
   let message = args[0];
 
-  if (args.length !== 1)
-    console.log('Error: Too many arguments. Please ensure your commit message is surrounded by quotes.')
-  else
-    runCommand(`git add -A && git commit -m "${message}"`)
+  if (args.length <= 0)
+    message = await getInput('Please enter a commit message:')
+  else if (args.length > 1)
+    message = await getInput('Too many arugments. Please enter a commit message:')
+
+  runCommand(`git add -A && git commit -m "${message}"`)
 }
 
 async function pushall(args) {
