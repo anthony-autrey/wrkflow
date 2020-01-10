@@ -9,6 +9,7 @@ const primaryCommands = [
   'init',
   'clone',
   'searchrepos',
+  'deletetag',
   'settoken'
 ]
 
@@ -30,6 +31,8 @@ export function cli(systemArgs) {
       searchRepos(secondaryArgs)
     else if (command == 'settoken')
       setToken(secondaryArgs)
+    else if (command == 'deletetag')
+      deleteTag(secondaryArgs)
     else
       console.log('Error: Unknown command');
   } catch (error) {
@@ -73,9 +76,20 @@ async function commitall(args) {
   if (args.length <= 0)
     message = await getInput('Please enter a commit message:')
   else if (args.length > 1)
-    message = await getInput('Too many arugments. Please enter a commit message:')
+    message = await getInput('Too many arguments. Please enter a commit message:')
 
   runCommand(`git add -A && git commit -m "${message}"`)
+}
+
+async function deleteTag(args) {
+  let tag = args[0];
+
+  if (args.length <= 0)
+    tag = await getInput('Please enter a tag to delete:')
+  else if (args.length > 1)
+    message = await getInput('Too many arguments. Please enter a tag to delete:')
+
+  runCommand(`git tag -d ${tag} && git push --delete origin ${tag}`)
 }
 
 async function pushall(args) {
@@ -84,7 +98,7 @@ async function pushall(args) {
   if (args.length <= 0)
     message = await getInput('Please enter a commit message:')
   else if (args.length > 1)
-    message = await getInput('Too many arugments. Please enter a commit message:')
+    message = await getInput('Too many arguments. Please enter a commit message:')
 
   runCommand(`git add -A && git commit -m "${message}" && git push`)
 }
