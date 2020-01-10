@@ -76,9 +76,10 @@ function commitall(args) {
 async function pushall(args) {
   let message = args[0];
 
-  if (args.length !== 1) {
+  if (args.length <= 0)
     message = await getInput('Please enter a commit message:')
-  }
+  else if (args.length > 1)
+    message = await getInput('Too many arugments. Please enter a commit message:')
 
   runCommand(`git add -A && git commit -m "${message}" && git push`)
 }
