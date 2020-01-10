@@ -125,7 +125,7 @@ async function clone(secondaryArgs) {
   let repos = [];
   let urls = [];
   response.data.forEach(repo => {
-    repos.push(repo.name)
+    repos.push(repo.full_name)
     urls.push(repo.ssh_url)
   })
 
