@@ -33,6 +33,7 @@ function ls(args) {
         console.log('Error: Too many arguments.')
     else {
       let tree = [];
+      let files = [];
       let contents = fs.readdirSync(path, "ascii");
       contents.forEach(element => {
         if (isDirectory(`${path}/${element}`)) {
@@ -42,18 +43,9 @@ function ls(args) {
             contents: contents
           });
         } else {
-          tree.push({name: element})
+          files.push(element)
         }
       });
-
-      tree.sort((a, b) => {
-        if (!a.contents && b.contents)
-          return 1;
-        else if (a.contents && !b.contents )
-          return -1;
-        else
-          return 0;
-      })
 
       tree.forEach(element => {
         if (element.contents) {
@@ -62,11 +54,16 @@ function ls(args) {
             dashString += "—"
           }
           console.log(chalk.blue(element.name) + chalk.blue(dashString))
-          console.log(chalk.blue('  |  ') + getDirContentString(element.contents, `${path}/${element.name}`));
+          console.log(chalk.blue('    ') + getDirContentString(element.contents, `${path}/${element.name}`));
         } else {
           console.log(element.name)
         }
-      })
+      });
+
+      if (files.length > 0) {
+          console.log(chalk.yellow("——————————————————————————"))
+          console.log(getFilesString(files))
+      }
     }
 }
 
@@ -91,7 +88,7 @@ function getDirContentString(array, parent) {
   array.forEach((element, index) => {
     currentLineLength += stringLength(element);
     if (currentLineLength > 80 ) {
-      formattedArray.push('\n  ' + chalk.blue('|'))
+      formattedArray.push('\n  ')
       currentLineLength = 0;
     }
 
@@ -100,6 +97,24 @@ function getDirContentString(array, parent) {
   })
 
   let string = formattedArray.toString().replace(/,/g, '  ');
+  return string;
+}
+
+function getFilesString(array) {
+  let formattedArray = []
+  let currentLineLength = 0;
+  array.forEach((element, index) => {
+    currentLineLength += stringLength(element);
+    if (currentLineLength > 80 ) {
+      formattedArray.push('\n')
+      currentLineLength = 0;
+    }
+
+    formattedArray.push(element)
+  })
+
+  let string = formattedArray.toString().replace(/\n,/g, '\n');
+  string = string.replace(/,/g, '  ');
   return string;
 }
 
