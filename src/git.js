@@ -327,11 +327,14 @@ async function getGitHubUsername() {
 async function runCommand(command, cancelExit) {
   exec(command, { env: process.env }, (err, stdout, stderr) => {
     if (err) {
-      console.log(err)
-    } else {
-      console.log(`${stdout}`);
-      console.log(`${stderr}`);
+      let error = err.message
+      console.log(error.substr(0, error.length - 2))
     }
+    if (stdout)
+      console.log(stdout);
+    if (stderr && !err)
+        console.log(stderr.substr(0, stderr.length - 2));
+
     if (!cancelExit)
       process.exit();
     else
