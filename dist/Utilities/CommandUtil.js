@@ -14,8 +14,7 @@ export class CommandUtil {
             return possibleCommand.string;
         });
         if (!command) {
-            console.log('Error: No command given.');
-            console.log('Try one of the following: ' + possibleCommands);
+            console.log(CommandUtil.getUnknownCommandString(possibleCommandStrings));
             process.exit();
         }
         let matches = possibleCommandStrings;
@@ -27,18 +26,20 @@ export class CommandUtil {
             });
         });
         if (matches.length <= 0) {
-            console.log('Error: Unknown command.');
-            console.log('Try one of the following: ' + possibleCommands);
+            console.log(CommandUtil.getUnknownCommandString(possibleCommandStrings));
             process.exit();
         }
         else if (matches.length > 1) {
-            console.log('Error: Ambiguous command. Did you mean ' + matches + '?');
+            console.log('Error: Ambiguous command. Did you mean [ ' + matches.toString().replace(/,/g, ', ') + ' ] ?');
             process.exit();
         }
         const matchingCommand = possibleCommands.find(possibleCommand => {
             return possibleCommand.string === matches[0].toLowerCase();
         });
         return matchingCommand;
+    }
+    static getUnknownCommandString(commands) {
+        return `Try one of the following: [ ${commands.toString().replace(/,/g, ', ')} ]`;
     }
     static runShell(command) {
         return __awaiter(this, void 0, void 0, function* () {
