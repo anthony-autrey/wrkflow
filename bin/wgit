@@ -1,4 +1,5 @@
 #!/usr/bin/env node
-
-require = require('esm')(module /*, options*/);
-require('../src/git').cli(process.argv);
+/* tslint:disable */
+const req = require('esm')(module);
+const Git = req('../dist/Git').default;
+new Git().handleSystemArguments(process.argv);
