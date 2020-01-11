@@ -328,12 +328,12 @@ async function runCommand(command, cancelExit) {
   exec(command, { env: process.env }, (err, stdout, stderr) => {
     if (err) {
       let error = err.message
-      console.log(error.substr(0, error.length - 2))
+      console.log(error.substr(0, error.length - 1))
     }
     if (stdout)
       console.log(stdout);
     if (stderr && !err)
-        console.log(stderr.substr(0, stderr.length - 2));
+        console.log(stderr.substr(0, stderr.length - 1));
 
     if (!cancelExit)
       process.exit();
