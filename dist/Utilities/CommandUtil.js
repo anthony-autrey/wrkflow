@@ -20,7 +20,7 @@ export class CommandUtil {
         }
         let matches = possibleCommandStrings;
         let letters = '';
-        Array.from(command).forEach(letter => {
+        Array.from(command.toLowerCase()).forEach(letter => {
             letters += letter;
             matches = matches.filter(match => {
                 return match.substring(0, letters.length) === letters;
@@ -36,7 +36,7 @@ export class CommandUtil {
             process.exit();
         }
         const matchingCommand = possibleCommands.find(possibleCommand => {
-            return possibleCommand.string === matches[0];
+            return possibleCommand.string === matches[0].toLowerCase();
         });
         return matchingCommand;
     }

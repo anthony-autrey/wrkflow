@@ -7,7 +7,7 @@ export default class Git {
     
     protected readonly commands: Command[] = [
         {string: 'commitall', function: Git.commitAll},
-        {string: 'pushall', function: () => {}},
+        {string: 'pushall', function: Git.pushAll},
         {string: 'init', function: () => {}},
         {string: 'clone', function: () => {}},
         {string: 'searchrepos', function: () => {}},
@@ -34,6 +34,19 @@ export default class Git {
       
         CommandUtil.runShell(`git add -A && git commit -m "${message}"`);
     }
+
+    private static async pushAll(args: string[]) {
+      let message = args[0];
+    
+      if (args.length <= 0) {
+          message = await InputUtil.getInput('Please enter a commit message:');
+      }
+      else if (args.length > 1) {
+          message = await InputUtil.getInput('Too many arguments. Please enter a commit message:');
+      }
+    
+      CommandUtil.runShell(`git add -A && git commit -m "${message}" && git push`);
+    }
 }
 
 
@@ -49,16 +62,6 @@ export default class Git {
 //   runCommand(`git tag -d ${tag} && git push --delete origin ${tag}`)
 // }
 
-// async function pushall(args) {
-//   let message = args[0];
-
-//   if (args.length <= 0)
-//     message = await getInput('Please enter a commit message:')
-//   else if (args.length > 1)
-//     message = await getInput('Too many arguments. Please enter a commit message:')
-
-//   runCommand(`git add -A && git commit -m "${message}" && git push`)
-// }
 
 // async function init() {
 //   let name = await getInput('Enter a repo name:');

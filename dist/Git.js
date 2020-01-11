@@ -13,7 +13,7 @@ export default class Git {
     constructor() {
         this.commands = [
             { string: 'commitall', function: Git.commitAll },
-            { string: 'pushall', function: () => { } },
+            { string: 'pushall', function: Git.pushAll },
             { string: 'init', function: () => { } },
             { string: 'clone', function: () => { } },
             { string: 'searchrepos', function: () => { } },
@@ -37,6 +37,18 @@ export default class Git {
                 message = yield InputUtil.getInput('Too many arguments. Please enter a commit message:');
             }
             CommandUtil.runShell(`git add -A && git commit -m "${message}"`);
+        });
+    }
+    static pushAll(args) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let message = args[0];
+            if (args.length <= 0) {
+                message = yield InputUtil.getInput('Please enter a commit message:');
+            }
+            else if (args.length > 1) {
+                message = yield InputUtil.getInput('Too many arguments. Please enter a commit message:');
+            }
+            CommandUtil.runShell(`git add -A && git commit -m "${message}" && git push`);
         });
     }
 }
