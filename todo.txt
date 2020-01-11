@@ -1,0 +1,9 @@
+To Do:
+  Clean up code and refactor
+  Deal with ssh vs http for git commands
+  Create shortcut addition tool: 'wk set' and 'wk unset'
+  Better help and documentation
+  Arg handling system
+
+Ideas:
+  Git:

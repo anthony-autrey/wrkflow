@@ -1,6 +1,6 @@
 {
   "name": "wrkflow",
-  "version": "1.0.8",
+  "version": "1.0.12",
   "description": "A tool that adds convenient commands to the command line.",
   "main": "index.js",
   "bin": {
@@ -15,7 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.1",
+    "chalk": "~3.0.0",
     "esm": "~3.2.25",
-    "inquirer": "^7.0.3"
+    "inquirer": "^7.0.3",
+    "string-length": "~3.1.0"
   }
 }
