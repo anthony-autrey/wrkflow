@@ -2,14 +2,16 @@ const axios = require('axios');
 const fs = require('fs');
 const input = require('inquirer');
 const exec = require('child_process').exec;
+const chalk = require('chalk');
+const stringLength = require('string-length');
 
 export function cli(systemArgs) {
     try {
         let args = systemArgs.slice(2);
         let secondaryArgs = systemArgs.slice(3);
         let command = args[0];
-        if (command == 'cdnew')
-          cdnew(secondaryArgs)
+        if (command == 'ls')
+          ls(secondaryArgs)
         else if (command == 'http')
           http(secondaryArgs)
         else
@@ -21,15 +23,83 @@ export function cli(systemArgs) {
     }
 }
 
-function cdnew(args) {
-    let dir = args[0];
+function ls(args) {
+    let path = args[0];
+    if (!path)
+      path = '.';
 
-    if (args.length !== 1)
+    if (args.length > 1)
         console.log('Error: Too many arguments.')
     else {
-      fs.mkdirSync(dir);
-      process.chdir(dir);
+      let tree = [];
+      let contents = fs.readdirSync(path, "ascii");
+      contents.forEach(element => {
+        if (isDirectory(`${path}/${element}`)) {
+          let contents = fs.readdirSync(`${path}/${element}`, "ascii");
+          tree.push({
+            name: element,
+            contents: contents
+          });
+        } else {
+          tree.push({name: element})
+        }
+      });
+
+      tree.sort((a, b) => {
+        if (!a.contents && b.contents)
+          return 1;
+        else if (a.contents && !b.contents )
+          return -1;
+        else
+          return 0;
+      })
+
+      tree.forEach(element => {
+        if (element.contents) {
+          let dashString = " "
+          for (let i = 0; i < 25 - element.name.length; i ++) {
+            dashString += "—"
+          }
+          console.log(chalk.blue(element.name + dashString))
+          console.log(chalk.blue('  |  ') + getDirContentString(element.contents, `${path}/${element.name}`));
+        } else {
+          console.log(chalk.yellow(element.name))
+        }
+      })
     }
+}
+
+function isDirectory(path) {
+  return fs.lstatSync(path).isDirectory()
+}
+
+function getDirContentString(array, parent) {
+  let directories = [];
+  let files = [];
+  array.forEach(element => {
+    if (isDirectory(`${parent}/${element}`))
+      directories.push(chalk.underline(element))
+    else
+      files.push(element)
+  })
+
+  array = directories.concat(files);
+
+  let formattedArray = []
+  let currentLineLength = 0;
+  array.forEach((element, index) => {
+    currentLineLength += stringLength(element);
+    if (currentLineLength > 100) {
+      formattedArray.push('\n  ' + chalk.blue('|'))
+      currentLineLength = 0;
+    }
+
+    formattedArray.push(element)
+
+  })
+
+  let string = formattedArray.toString().replace(/,/g, '  ');
+  return string;
 }
 
 async function http(args) {

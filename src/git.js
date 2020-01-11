@@ -111,10 +111,9 @@ async function init() {
   let response = await axios.post(`https://api.github.com/user/repos?access_token=${token}`, {
     "name": `${name}`,
     "description": `${description}`,
-    // "homepage": "https://github.com",
     "private": !repoIsPublic,
     validateStatus: function (status) {
-      return status >= 200 && status < 300; // default
+      return status >= 200 && status < 300;
     },
   }).catch(error => {
     console.log('Error: Couldn\'t create repo.')
