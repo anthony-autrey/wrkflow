@@ -6,8 +6,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import chalk from 'chalk';
 import * as input from 'inquirer';
-export class InputUtil {
+export class ConsoleUtil {
     static getInput(message, defaultValue) {
         return __awaiter(this, void 0, void 0, function* () {
             const question = yield input.prompt({ name: 'answer', type: 'input', message, default: defaultValue });
@@ -26,5 +27,8 @@ export class InputUtil {
             return Promise.resolve(question.answer);
         });
     }
+    static logInvalidArgumentsError(command) {
+        console.log(chalk.red('Invalid Arguments, Usage: ') + chalk.white(command.usage));
+    }
 }
-//# sourceMappingURL=InputUtil.js.map
+//# sourceMappingURL=ConsoleUtil.js.map

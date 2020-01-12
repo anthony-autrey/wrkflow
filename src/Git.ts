@@ -1,91 +1,223 @@
 import axios from 'axios';
-import * as fs from 'fs';
+import chalk from 'chalk';
 import { Command, CommandUtil } from './Utilities/CommandUtil';
-import { InputUtil } from './Utilities/InputUtil';
+import { ConfigUtil } from './Utilities/ConfigUtil';
+import { ConsoleUtil } from './Utilities/ConsoleUtil';
+import { async } from 'rxjs/internal/scheduler/async';
 
 export default class Git {
-    
-    protected readonly commands: Command[] = [
-        {string: 'commitall', function: Git.commitAll},
-        {string: 'pushall', function: Git.pushAll},
-        {string: 'init', function: () => {}},
-        {string: 'clone', function: () => {}},
-        {string: 'searchrepos', function: () => {}},
-        {string: 'deletetag', function: () => {}},
-        {string: 'settoken', function: () => {}},
-    ];
+
+    private config = new ConfigUtil();
 
     public handleSystemArguments(systemArguments: string[]) {
         const args = systemArguments.slice(2);
         const secondaryArgs = systemArguments.slice(3);
         const command = CommandUtil.getClosestMatch(args[0], this.commands);
-        command.function(secondaryArgs);
+        command.function(secondaryArgs, command);
     }
 
-    private static async commitAll(args: string[]) {
+    private async commitAll(args: string[], command: Command) {
+        if (!CommandUtil.validateArguments(args, 0, 1)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
         let message = args[0];
-      
+
         if (args.length <= 0) {
-            message = await InputUtil.getInput('Please enter a commit message:');
+            message = await ConsoleUtil.getInput('Please enter a commit message:');
         }
         else if (args.length > 1) {
-            message = await InputUtil.getInput('Too many arguments. Please enter a commit message:');
+            message = await ConsoleUtil.getInput('Too many arguments. Please enter a commit message:');
         }
-      
+
         CommandUtil.runShell(`git add -A && git commit -m "${message}"`);
     }
 
-    private static async pushAll(args: string[]) {
-      let message = args[0];
-    
-      if (args.length <= 0) {
-          message = await InputUtil.getInput('Please enter a commit message:');
-      }
-      else if (args.length > 1) {
-          message = await InputUtil.getInput('Too many arguments. Please enter a commit message:');
-      }
-    
-      CommandUtil.runShell(`git add -A && git commit -m "${message}" && git push`);
+    private async pushAll(args: string[], command: Command) {
+        if (!CommandUtil.validateArguments(args, 0, 1)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+        
+        let message = args[0];
+
+        if (args.length <= 0) {
+            message = await ConsoleUtil.getInput('Please enter a commit message:');
+        }
+        else if (args.length > 1) {
+            message = await ConsoleUtil.getInput('Too many arguments. Please enter a commit message:');
+        }
+
+        CommandUtil.runShell(`git add -A && git commit -m "${message}" && git push`);
     }
+
+    private async deleteTag(args: string[], command: Command) {
+        if (!CommandUtil.validateArguments(args, 0, 1)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        let tag = args[0];
+        if (args.length <= 0) {
+            tag = await ConsoleUtil.getInput('Please enter a tag to delete:');
+        }
+
+        CommandUtil.runShell(`git tag -d ${tag} && git push --delete origin ${tag}`);
+    }
+
+    private setToken = async (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 0, 1)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        let token = args[0];
+        if (!token) {
+            token = await ConsoleUtil.getInput('Enter your Personal Access Token:');
+        }
+
+        this.config.set.wgit.githubPersonalAccessToken(token);
+        console.log(`Successfully set token: '${token}'.`);
+    }
+
+    private init = async (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 0, 2)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        let name = args[0];
+        let description = args[1];
+
+        if (!name) {
+            name = await ConsoleUtil.getInput('Enter a repo name:');
+        }
+
+        if (!description) {
+            description = await ConsoleUtil.getInput('Enter a description:');
+        }
+        const repoIsPublic = await ConsoleUtil.getConfirmation('Should the repo be public?');
+
+        const token = await this.getPersonalAccessToken();
+        if (!token) {
+            console.log('This operation requires that you establish a GitHub Personal Access Token with the \'wgit settoken\' command.');
+            return;
+        }
+        const response: any = await axios.post(`https://api.github.com/user/repos?access_token=${token}`, {
+            "name": `${name}`,
+            "description": `${description}`,
+            "private": !repoIsPublic,
+            validateStatus: (status: any) =>  {
+                return status >= 200 && status < 300;
+            },
+        }).catch(error => {
+            if (error.response) {
+                console.log(`${chalk.red(`Error: Couldn't create repo.`)}`);
+                console.log(`Response: ${error.response.status}, ${error.response.statusText}`);
+            }
+            process.exit();
+        });
+
+        const url = response.data.ssh_url;
+        CommandUtil.runShell(`git clone ${url}`);
+    }
+
+    private async getPersonalAccessToken(require?: boolean): Promise<string> {
+        let token = this.config.get.wgit.githubPersonalAccessToken();
+        if (token == null) {
+            const getToken = await ConsoleUtil.getConfirmation('You haven\'t registered a GitHub Personal Access Token. Do you want to now?');
+            if (getToken) {
+                console.log('  Go to GitHub.com > User Settings > Developer Settings to create a Personal Access Token');
+                token = await ConsoleUtil.getInput('Enter your Personal Access Token:');
+                this.config.set.wgit.githubPersonalAccessToken(token);
+            } else {
+                token = '';
+                this.config.set.wgit.githubPersonalAccessToken('');
+                console.log('You declined using a Personal Access Token. This means you\'ll only have anonymous access to the GitHub API.');
+                console.log('To change your token later, use the \'wgit settoken\' command.');
+            }
+        }
+
+        return Promise.resolve(token);
+    }
+
+    // Command Configuration
+
+    protected readonly commands: Command[] = [
+        {
+            string: 'commitall',
+            function: this.commitAll,
+            usage: `wgit commitall '<commit message (optional)>'`,
+            description: `Stages and commits all current changes. If a commit message isn't included, a prompt will accept one.`
+        },
+        {
+            string: 'pushall',
+            function: this.pushAll,
+            usage: `wgit pushall '<commit message (optional)>'`,
+            description: `Stages, commits and pushes all current changes. If a commit message isn't included, a prompt will accept one.`
+        },
+        {
+            string: 'init',
+            function: this.init,
+            usage: `wgit init '<name (optional)> '<description (optional)>'`,
+            description: 'Creates a new GitHub repo and clones it in the current directory. (Requires GitHub Personal Access Token)'
+        },
+        {
+            string: 'clone',
+            function: () => { },
+            usage: '',
+            description: ''
+        },
+        {
+            string: 'searchrepos',
+            function: () => { },
+            usage: '',
+            description: ''
+        },
+        {
+            string: 'deletetag',
+            function: this.deleteTag,
+            usage: `wgit deletetag <tag (optional)>`,
+            description: 'Deletes a tag both locally and in origin.'
+        },
+        {
+            string: 'settoken',
+            function: this.setToken,
+            usage: 'wgit settoken <token (optional)>',
+            description: 'Sets a GitHub personal access token for accessing the GitHub API.'
+        },
+        {
+            string: 'testconfig',
+            function: () => {
+                const config = new ConfigUtil();
+                let token = config.get.wgit.githubPersonalAccessToken();
+                console.log('1 --> ' + token);
+                config.set.wgit.githubPersonalAccessToken(null);
+                token = config.get.wgit.githubPersonalAccessToken();
+
+                if (token) {
+                    console.log('was token. -> ' + token);
+                } else {
+                    console.log('no token -> ' + token);
+                }
+
+                config.set.wgit.githubPersonalAccessToken('not null');
+                token = config.get.wgit.githubPersonalAccessToken();
+                if (token) {
+                    console.log('was token. -> ' + token);
+                } else {
+                    console.log('no token -> ' + token);
+                }
+
+            },
+            usage: '',
+            description: ''
+        },
+    ];
 }
 
 
-
-// async function deleteTag(args) {
-//   let tag = args[0];
-
-//   if (args.length <= 0)
-//     tag = await getInput('Please enter a tag to delete:')
-//   else if (args.length > 1)
-//     message = await getInput('Too many arguments. Please enter a tag to delete:')
-
-//   runCommand(`git tag -d ${tag} && git push --delete origin ${tag}`)
-// }
-
-
-// async function init() {
-//   let name = await getInput('Enter a repo name:');
-//   let token = await getPersonalAccessToken();
-//   let description = await getInput('Enter a description:');
-//   let repoIsPublic = await getConfirmation('Should the repo be public?');
-//   let response = await axios.post(`https://api.github.com/user/repos?access_token=${token}`, {
-//     "name": `${name}`,
-//     "description": `${description}`,
-//     "private": !repoIsPublic,
-//     validateStatus: function (status) {
-//       return status >= 200 && status < 300;
-//     },
-//   }).catch(error => {
-//     console.log('Error: Couldn\'t create repo.')
-//     let token = getConfig('github_personal_access_token')
-//     if (token == '')
-//       console.log('You need to establish a GitHub Personal Access Token with the \'wgit settoken\' command.')
-//     process.exit();
-//   });
-
-//   let url = response.data.ssh_url
-//   runCommand(`git clone ${url}`)
-// }
 
 // async function clone(secondaryArgs) {
 //   let token = await getPersonalAccessToken();
@@ -116,7 +248,7 @@ export default class Git {
 //       console.log('Error: That repo already exists here.')
 //       process.exit();
 //     }
-//     await runCommand(`git clone ${url}`)
+//     await CommandUtil.runShell(`git clone ${url}`)
 //   } else {
 //     Console.log('Couldn\'t find any repos')
 //     process.exit();
@@ -127,7 +259,7 @@ export default class Git {
 //   if (secondaryArgs.length <= 0) {
 //     console.log('Search queries may include qualifiers. Examples:')
 //     console.log('user:anthony-autrey org:centurylink language:javascript is:public stars:>=100')
-//     let input = await getInput('Enter a search query:')
+//     let input = await InputUtil.getInput('Enter a search query:')
 //     secondaryArgs = input.split(' ')
 //   }
 
@@ -161,9 +293,9 @@ export default class Git {
 //       console.log('Error: That repo already exists here.')
 //       process.exit();
 //     }
-//     await runCommand(`git clone ${selectedRepoInfo.url}`)
+//     await CommandUtil.runShell(`git clone ${selectedRepoInfo.url}`)
 //   } else if (selectedAction == 'Delete') {
-//     let typedConfirmation = await getInput(`To confirm deletion, type the full name of the repo: (${selectedRepoInfo.name}) THIS CANNOT BE UNDONE!`);
+//     let typedConfirmation = await InputUtil.getInput(`To confirm deletion, type the full name of the repo: (${selectedRepoInfo.name}) THIS CANNOT BE UNDONE!`);
 //     if (typedConfirmation == selectedRepoInfo.name) {
 //       axios.delete(`https://api.github.com/repos/${selectedRepoInfo.name}?access_token=${token}`).then(() => {
 //         console.log('Successfully deleted repo.')
@@ -212,7 +344,7 @@ export default class Git {
 
 // async function takePersonalAccessTokenInput() {
 //   console.log('  Go to GitHub.com > User Settings > Developer Settings to create a Personal Access Token');
-//   let token = await getInput('Enter your Personal Access Token:')
+//   let token = await InputUtil.getInput('Enter your Personal Access Token:')
 //   await writeConfigFile('github_personal_access_token', token).catch(error => {});
 
 //   return Promise.resolve(token);
@@ -276,7 +408,7 @@ export default class Git {
 //   } else {
 //     let getUsername = await getConfirmation('You haven\'t registered a GitHub username. Do you want to now?')
 //     if (getUsername) {
-//       let username = await getInput('Enter your GitHub username:')
+//       let username = await InputUtil.getInput('Enter your GitHub username:')
 //       await writeConfigFile('github_username', username).catch(error => console.log(error));
 //       return Promise.resolve(username);
 //     } else

@@ -2,7 +2,9 @@ import * as child from 'child_process';
 
 export interface Command {
     string: string;
-    function: (args: string[]) => void;
+    function: (args: string[], command: Command) => void;
+    usage: string;
+    description: string;
 }
 
 export class CommandUtil {
@@ -42,6 +44,25 @@ export class CommandUtil {
 
     public static getUnknownCommandString(commands: string[]) {
         return `Try one of the following: [ ${commands.toString().replace(/,/g, ', ')} ]`;
+    }
+
+    public static validateArguments(args: string[], minArgs: number, maxArgs: number, regex: RegExp[] = []) : boolean {
+        if (args.length < minArgs || args.length > maxArgs) {
+            return false;
+        }
+
+        let allRegexMatch = true;
+        regex.forEach((reg, index) => {
+            if (!args[index]) {
+                throw new Error('Unexpected: more regex provided than args');
+            }
+
+            if (!reg.test(args[index])) {
+                allRegexMatch = false;
+            }
+        });
+
+        return allRegexMatch;
     }
 
     public static async runShell(command: string) {

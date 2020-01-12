@@ -53,8 +53,8 @@ function ls(args) {
           for (let i = 0; i < 25 - element.name.length; i ++) {
             dashString += "—"
           }
-          console.log(chalk.blue(element.name) + chalk.blue(dashString))
-          console.log(chalk.blue('    ') + getDirContentString(element.contents, `${path}/${element.name}`));
+          console.log(chalk.blueBright(element.name) + chalk.blueBright(dashString))
+          console.log(chalk.blueBright('    ') + getDirContentString(element.contents, `${path}/${element.name}`));
         } else {
           console.log(element.name)
         }
@@ -76,7 +76,7 @@ function getDirContentString(array, parent) {
   let files = [];
   array.forEach(element => {
     if (isDirectory(`${parent}/${element}`))
-      directories.push(chalk.blue(element))
+      directories.push(chalk.blueBright(element))
     else
       files.push(element)
   })
