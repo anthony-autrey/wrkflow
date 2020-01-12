@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import * as child from 'child_process';
 
 export interface Command {
@@ -31,7 +32,7 @@ export class CommandUtil {
         console.log(CommandUtil.getUnknownCommandString(possibleCommandStrings));
         process.exit();
         } else if (matches.length > 1) {
-        console.log('Error: Ambiguous command. Did you mean [ ' + matches.toString().replace(/,/g, ', ') + ' ] ?');
+        console.log(chalk.red('Error: Ambiguous command. Did you mean [ ' + chalk.white(matches.toString().replace(/,/g, ', ')) + ' ] ?'));
         process.exit();
         }
     

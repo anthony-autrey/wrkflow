@@ -6,6 +6,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import chalk from 'chalk';
 import * as child from 'child_process';
 export class CommandUtil {
     static getClosestMatch(command, possibleCommands) {
@@ -29,7 +30,7 @@ export class CommandUtil {
             process.exit();
         }
         else if (matches.length > 1) {
-            console.log('Error: Ambiguous command. Did you mean [ ' + matches.toString().replace(/,/g, ', ') + ' ] ?');
+            console.log(chalk.red('Error: Ambiguous command. Did you mean [ ' + chalk.white(matches.toString().replace(/,/g, ', ')) + ' ] ?'));
             process.exit();
         }
         const matchingCommand = possibleCommands.find(possibleCommand => {
