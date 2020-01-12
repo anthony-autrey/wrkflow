@@ -201,33 +201,7 @@ export default class Git {
                 function: this.setToken,
                 usage: 'wgit settoken <token (optional)>',
                 description: 'Sets a GitHub personal access token for accessing the GitHub API.'
-            },
-            {
-                string: 'testconfig',
-                function: () => {
-                    const config = new ConfigUtil();
-                    let token = config.get.wgit.githubPersonalAccessToken();
-                    console.log('1 --> ' + token);
-                    config.set.wgit.githubPersonalAccessToken(null);
-                    token = config.get.wgit.githubPersonalAccessToken();
-                    if (token) {
-                        console.log('was token. -> ' + token);
-                    }
-                    else {
-                        console.log('no token -> ' + token);
-                    }
-                    config.set.wgit.githubPersonalAccessToken('not null');
-                    token = config.get.wgit.githubPersonalAccessToken();
-                    if (token) {
-                        console.log('was token. -> ' + token);
-                    }
-                    else {
-                        console.log('no token -> ' + token);
-                    }
-                },
-                usage: '',
-                description: ''
-            },
+            }
         ];
     }
     handleSystemArguments(systemArguments) {
