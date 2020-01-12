@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import { Command, CommandUtil } from './Utilities/CommandUtil';
 import { ConfigUtil } from './Utilities/ConfigUtil';
 import { ConsoleUtil } from './Utilities/ConsoleUtil';
-import { async } from 'rxjs/internal/scheduler/async';
 
 export default class Git {
 
