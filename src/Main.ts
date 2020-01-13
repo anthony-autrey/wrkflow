@@ -176,6 +176,63 @@ export default class Main {
         return !!pattern.test(url);
     }
 
+    private ask = async (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 1, Number.MAX_SAFE_INTEGER)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        const query = args.join(' ');
+        const response: any = await axios.get(`https://api.duckduckgo.com/?q=${query}&format=json`).catch(error => {
+            console.log(chalk.red(`Error: Couldn't contact DuckDuckGo Instant Answer API.`));
+            if (error.response) {
+                console.log(`Response: ${error.response.status}, ${error.response.statusText}`);
+            }
+            process.exit();
+        });
+
+        const entity = response.data.Entity;
+        const heading = response.data.Heading;
+        const abstract = response.data.Abstract;
+        if (!response.data.RelatedTopics) {console.log(response.data);}
+
+        let relatedTopics = response.data.RelatedTopics.map((topic: any) => {
+            if (topic.Result) {
+                const result = topic.Result.split('>')[1].split('<')[0].trim();
+                return result;
+            }
+        });
+
+        relatedTopics = relatedTopics.filter((topic: any) => {
+            return topic && topic.toLowerCase() !== query.toLowerCase() &&
+            topic.slice(topic.length - 8, topic.length) !== 'Category';
+        });
+
+        console.log(chalk.green('——————————————————————————————————————————————————————————————————————————————\n'));
+        if (abstract) {
+            entity && !entity.includes(',') ? console.log(chalk.blueBright(`${heading} (${entity}):`)) : console.log(chalk.blueBright(`${heading}:`));
+            console.log(abstract);
+        } else {
+            if (response.data.Type && (response.data.Type === 'D' || response.data.Type === 'C') && relatedTopics.length > 0) {
+                const topic = query.substr(0,1).toUpperCase() + query.substr(1, query.length - 1);
+                relatedTopics.unshift(topic);
+                console.log(chalk.blue('Disambiguation:'));
+                console.log(relatedTopics.join(', '));
+            } else {
+                console.log(chalk.grey(`No results found`));
+            }
+        }
+        console.log(chalk.green('\n——————————————————————————————————————————————————————————————————————————————'));
+        if (relatedTopics.length > 0) {
+            let newQuestion = await ConsoleUtil.getInputFromList(chalk.reset.yellow('Select a topic:'),relatedTopics);
+            if (newQuestion.toLowerCase() === query.toLowerCase()) { newQuestion = newQuestion + ' wikipedia';}
+            this.ask(newQuestion.split(' '), command);
+        } else if (response.data.Type) {
+            console.log(chalk.gray('No related topics found'));
+        }
+
+    }
+
     // Command Configuration
 
     protected readonly commands: Command[] = [
@@ -190,6 +247,12 @@ export default class Main {
             function: this.http,
             usage: `wk http '<HTTP method (optional)> <url (optional)> '<payload in JSON format (optional)>'`,
             description: `Makes http requests and prints the results.`
+        },
+        {
+            string: 'ask',
+            function: this.ask,
+            usage: `wk ask <natural language query>`,
+            description: `Responds to natural language queries using the DuckDuckGo Instant Answer API.`
         },
     ];
 }
