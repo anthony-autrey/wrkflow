@@ -10,6 +10,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "preversion": "npm run build",
     "patch": "npm version patch && npm publish && git push --tags"
   },
   "author": "Anthony Autrey",

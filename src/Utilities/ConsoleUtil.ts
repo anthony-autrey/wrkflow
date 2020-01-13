@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import * as input from 'inquirer';
 import { Command } from './CommandUtil';
 
-
 export class ConsoleUtil {
 
     public static async getInput(message: string, defaultValue?: string): Promise<string> {

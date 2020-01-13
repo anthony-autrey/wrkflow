@@ -1,17 +1,8 @@
 To Do:
-  Change to Typescript
-  Clean up code and refactor
   Deal with ssh vs http for git commands
   Create shortcut addition tool: 'wk set' and 'wk unset'
   Better help and documentation
     Add to commands interface a help line
-  Arg handling system
-    function like: validateArgs(args, expectedCount: number, regex: regex[])
-      ...And count has to match, each arg has to match each regexp
-  Config reader/writer
-    Have one master config JSON with Interface
-    On get(), read the whole file again
-    On set(), write the whoel file again
 
 Ideas:
   Git:
