@@ -210,21 +210,24 @@ export default class Main {
 
         console.log(chalk.green('——————————————————————————————————————————————————————————————————————————————\n'));
         if (abstract) {
-            entity && !entity.includes(',') ? console.log(chalk.blueBright(`${heading} (${entity}):`)) : console.log(chalk.blueBright(`${heading}:`));
+            entity && !entity.includes(',') && !entity.includes('|') ? console.log(chalk.blueBright(`${heading} (${entity}):`)) : console.log(chalk.blueBright(`${heading}:`));
             console.log(abstract);
         } else {
             if (response.data.Type && (response.data.Type === 'D' || response.data.Type === 'C') && relatedTopics.length > 0) {
                 const topic = query.substr(0,1).toUpperCase() + query.substr(1, query.length - 1);
                 relatedTopics.unshift(topic);
-                console.log(chalk.blue('Disambiguation:'));
+                console.log(chalk.yellow('Disambiguation:'));
                 console.log(relatedTopics.join(', '));
             } else {
-                console.log(chalk.grey(`No results found`));
+                const wolframResponse: any = await axios.get(`https://api.wolframalpha.com/v1/result?i=${query}&appid=8W3AA6-587U33TA5J`).catch(() => null);
+
+                if (wolframResponse && wolframResponse.data) {console.log(wolframResponse.data);}
+                else {console.log(chalk.grey(`No results found`));}
             }
         }
         console.log(chalk.green('\n——————————————————————————————————————————————————————————————————————————————'));
         if (relatedTopics.length > 0) {
-            let newQuestion = await ConsoleUtil.getInputFromList(chalk.reset.yellow('Select a topic:'),relatedTopics);
+            let newQuestion = await ConsoleUtil.getInputFromList(chalk.reset.yellow('Select a related topic:'),relatedTopics);
             if (newQuestion.toLowerCase() === query.toLowerCase()) { newQuestion = newQuestion + ' wikipedia';}
             this.ask(newQuestion.split(' '), command);
         } else if (response.data.Type) {
