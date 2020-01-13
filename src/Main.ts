@@ -63,7 +63,7 @@ export default class Main {
           });
     
           if (files.length > 0) {
-              console.log(chalk.yellow("——————————————————————————"));
+              console.log("——————————————————————————");
               console.log(this.getFilesString(files));
           }
         }
