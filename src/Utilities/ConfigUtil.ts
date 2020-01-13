@@ -40,7 +40,9 @@ export class ConfigUtil {
     }
 
     private writeConfigFile() {
-        fs.mkdirSync(this.directorypath, { recursive: true });
+        if (!fs.existsSync(this.directorypath)) {
+            fs.mkdirSync(this.directorypath, { recursive: true });
+        }
         fs.writeFileSync(this.filepath, JSON.stringify(this.config));
     }
 
@@ -53,7 +55,9 @@ export class ConfigUtil {
             }
         };
 
-        fs.mkdirSync(this.directorypath, { recursive: true });
+        if (!fs.existsSync(this.directorypath)) {
+            fs.mkdirSync(this.directorypath, { recursive: true });
+        }
         fs.writeFileSync(this.filepath, JSON.stringify(config));
     }
 

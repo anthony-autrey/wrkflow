@@ -6,5 +6,9 @@ To Do:
 Ideas:
   Git:
     On pushall, check branch and set upstream
+  Main:
+    Ask:
+
+    ls: gray out hidden files, allow for traversal like ask
   General:
     Create shortcut addition tool: 'wk set' and 'wk unset'
