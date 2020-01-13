@@ -7,8 +7,8 @@ Ideas:
   Git:
     On pushall, check branch and set upstream
   Main:
-    Ask:
+    Ask: if no results, no 'No related topics'
 
-    ls: gray out hidden files, allow for traversal like ask
+    ls: allow for traversal like ask
   General:
     Create shortcut addition tool: 'wk set' and 'wk unset'

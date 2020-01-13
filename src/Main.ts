@@ -49,10 +49,16 @@ export default class Main {
               for (let i = 0; i < 25 - element.name.length; i ++) {
                 dashString += "—";
               }
-              console.log(chalk.blueBright(element.name) + chalk.blueBright(dashString));
+
+              if (this.isHidden(`${path}/${element.name}`)) {
+                console.log(this.styleAsHidden(element.name + dashString));
+              } else {
+                  console.log(chalk.blueBright(element.name + dashString));
+              }
+
               console.log(chalk.blueBright('    ') + this.getDirContentString(element.contents, `${path}/${element.name}`));
             } else {
-              console.log(element.name);
+                console.log(this.isHidden(element.name) ? this.styleAsHidden(element.name): element.name);
             }
           });
     
@@ -63,12 +69,21 @@ export default class Main {
         }
     }
 
+    private isHidden = (path: string): boolean => {
+        return (/(^|\/)\.[^\/\.]/g).test(path);
+    }
+
+    private styleAsHidden(str: string) {
+        return chalk.grey(str);
+    }
+
     private getDirContentString(contents: string[], parent: string) {
         const directories: any[] = [];
         const files: string[] = [];
         contents.forEach(element => {
             if (this.isDirectory(`${parent}/${element}`)) {
-                directories.push(chalk.blueBright(element));
+                const coloredElement = chalk.blueBright(element);
+                directories.push(this.isHidden(element) ? this.styleAsHidden(element): coloredElement);
             } else {
                 files.push(element);
 
@@ -96,14 +111,14 @@ export default class Main {
     private getFilesString(files: string[]) {
         const formattedArray: any[] = [];
         let currentLineLength = 0;
-        files.forEach((element, index) => {
-            currentLineLength += stringLength(element);
+        files.forEach((file) => {
+            currentLineLength += stringLength(file);
             if (currentLineLength > 80 ) {
                 formattedArray.push('\n');
                 currentLineLength = 0;
             }
-        
-            formattedArray.push(element);
+            const styledFile = this.isHidden(file) ? this.styleAsHidden(file) : file;
+            formattedArray.push(styledFile);
         });
     
         let filesString = formattedArray.toString().replace(/\n,/g, '\n');
