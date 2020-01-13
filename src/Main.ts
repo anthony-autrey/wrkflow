@@ -182,7 +182,7 @@ export default class Main {
             return;
         }
 
-        const query = args.join(' ');
+        const query = args.join(' ').toLowerCase();
         const response: any = await axios.get(`https://api.duckduckgo.com/?q=${query}&format=json`).catch(error => {
             console.log(chalk.red(`Error: Couldn't contact DuckDuckGo Instant Answer API.`));
             if (error.response) {
