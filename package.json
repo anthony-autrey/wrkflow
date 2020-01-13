@@ -3,6 +3,10 @@
   "version": "1.0.17",
   "description": "A tool that adds convenient commands to the command line.",
   "main": "index.js",
+  "files": [
+    "dist/**/*",
+    "bin/**/*"
+  ],
   "bin": {
     "wgit": "bin/wgit",
     "wk": "bin/wk"
