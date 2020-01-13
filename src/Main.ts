@@ -14,24 +14,6 @@ export default class Main {
         command.function(secondaryArgs, command);
     }
 
-    private async commitAll(args: string[], command: Command) {
-        if (!CommandUtil.validateArguments(args, 0, 1)) {
-            ConsoleUtil.logInvalidArgumentsError(command);
-            return;
-        }
-
-        let message = args[0];
-
-        if (args.length <= 0) {
-            message = await ConsoleUtil.getInput('Please enter a commit message:');
-        }
-        else if (args.length > 1) {
-            message = await ConsoleUtil.getInput('Too many arguments. Please enter a commit message:');
-        }
-
-        CommandUtil.runShell(`git add -A && git commit -m "${message}"`);
-    }
-
     private ls = (args: string[], command: Command) => {
         if (!CommandUtil.validateArguments(args, 0, 1)) {
             ConsoleUtil.logInvalidArgumentsError(command);
