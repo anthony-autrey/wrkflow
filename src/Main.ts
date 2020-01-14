@@ -11,7 +11,12 @@ export default class Main {
         const args = systemArguments.slice(2);
         const secondaryArgs = systemArguments.slice(3);
         const command = CommandUtil.getClosestMatch(args[0], this.commands);
-        command.function(secondaryArgs, command);
+
+        if (args.includes(CommandUtil.helpFlag)) {
+            CommandUtil.logCommandHelpString(command);
+        } else {
+            command.function(secondaryArgs, command);
+        }
     }
 
     private ls = (args: string[], command: Command) => {

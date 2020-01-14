@@ -9,6 +9,8 @@ export interface Command {
 }
 
 export class CommandUtil {
+
+    public static readonly helpFlag: string = '?';
     
     public static getClosestMatch(command: string, possibleCommands: Command[]): Command {
         const possibleCommandStrings = possibleCommands.map(possibleCommand => {
@@ -47,11 +49,16 @@ export class CommandUtil {
         let unknownCommandString = chalk.blue('Unknown Command. Try one of the following:\n\n');
         commands.forEach((command, index) => {
             unknownCommandString += chalk.yellow(command.usage + '\n');
-            unknownCommandString += chalk.white('(' + command.description + ')');
+            unknownCommandString += chalk.white(command.description);
 
             if (index !== commands.length - 1) { unknownCommandString += '\n\n'; }
         });
         return unknownCommandString;
+    }
+
+    public static logCommandHelpString(command: Command) {
+        console.log(chalk.yellow(command.usage));
+        console.log(`${command.description}`);
     }
 
     public static validateArguments(args: string[], minArgs: number, maxArgs: number, regex: RegExp[] = []) : boolean {
