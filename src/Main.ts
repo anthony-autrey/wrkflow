@@ -3,11 +3,24 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import stringLength from 'string-length';
 import { Command, CommandUtil } from './Utilities/CommandUtil';
+import { ConfigUtil } from './Utilities/ConfigUtil';
 import { ConsoleUtil } from './Utilities/ConsoleUtil';
 
 export default class Main {
 
+    private config = new ConfigUtil();
+
     public handleSystemArguments(systemArguments: string[]) {
+        const customCommands = this.config.get.customCommands();
+        const matchingCommands = customCommands.filter(customCommand => {
+            return customCommand.input === systemArguments[2];
+        });
+
+        if (matchingCommands.length > 0) {
+            CommandUtil.runShell(matchingCommands[0].command);
+            return;
+        }
+
         const args = systemArguments.slice(2);
         const secondaryArgs = systemArguments.slice(3);
         const command = CommandUtil.getClosestMatch(args[0], this.commands);
@@ -16,6 +29,48 @@ export default class Main {
             CommandUtil.logCommandHelpString(command);
         } else {
             command.function(secondaryArgs, command);
+        }
+    }
+
+    private set = (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 2, Number.MAX_SAFE_INTEGER)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+        const customCommand = args.splice(1, args.length - 1).join(' ');
+        this.config.set.customCommand(args[0], customCommand);
+        console.log('Set custom command: ' + chalk.yellow('wk ' + args[0]));
+        console.log('Executes: ' + chalk.blue(customCommand));
+    }
+
+    private get = (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 0, 0)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+        if (this.config.get.customCommands().length > 0) { console.log('Listing keywords set by \'wk set\': '); }
+        else { console.log(`No keywords set. Use the 'wk set' command to establish keywords.`); }
+
+        this.config.get.customCommands().forEach(customCommand => {
+            console.log(chalk.yellow(customCommand.input) + ', Executes: ' + chalk.blue(customCommand.command));
+        });
+    }
+
+    private unset = (args: string[], command: Command) => {
+        if (!CommandUtil.validateArguments(args, 1, 1)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        const matchingCommand = this.config.get.customCommands().find(customCommand => {
+            return customCommand.input === args[0];
+        });
+
+        if (matchingCommand) {
+            console.log(`Unsetting keyword: ${chalk.yellow(matchingCommand.input)} <${chalk.blue(matchingCommand.command)}>`);
+            this.config.unsetCommand(args[0]);
+        } else {
+            console.log(chalk.red(`Couldn't find keyword: ${args[0]}`));
         }
     }
 
@@ -310,6 +365,24 @@ export default class Main {
             function: this.ask,
             usage: `wk ask <natural language query>`,
             description: `Responds to natural language queries using the DuckDuckGo Instant Answer API.`
+        },
+        {
+            string: 'set',
+            function: this.set,
+            usage: `wk set <keyword> '<executable shell command>'`,
+            description: `Creates a shortcut keyword for the given command. Can then be used as follows: wk <keyword>.`
+        },
+        {
+            string: 'get',
+            function: this.get,
+            usage: `wk get`,
+            description: `Lists keywords defined with the 'wk set' command.`
+        },
+        {
+            string: 'unset',
+            function: this.unset,
+            usage: `wk unset <keyword>`,
+            description: `Removes a shortcut keyword defined with the 'wk set' command.`
         },
     ];
 }

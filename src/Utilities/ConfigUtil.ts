@@ -6,6 +6,12 @@ export interface Config {
         username: string;
         password: string;
     };
+    customCommands: CustomCommand[];
+}
+
+interface CustomCommand {
+    input: string;
+    command: string;
 }
 
 export class ConfigUtil {
@@ -16,13 +22,15 @@ export class ConfigUtil {
     public set = {
         wgit: {
             githubPersonalAccessToken: (value: string) => this.setGithubPersonalAccessToken(value)
-        }
+        },
+        customCommand: (input: string, command: string) => this.setCustomCommand(input, command)
     };
 
     public get = {
         wgit: {
             githubPersonalAccessToken: () => this.getGithubPersonalAccessToken()
-        }
+        },
+        customCommands: () => this.getCustomCommands()
     };
 
     public constructor() {
@@ -52,7 +60,8 @@ export class ConfigUtil {
                 githubPersonalAccessToken: null,
                 username: null,
                 password: null
-            }
+            },
+            customCommands: []
         };
 
         if (!fs.existsSync(this.directorypath)) {
@@ -72,10 +81,35 @@ export class ConfigUtil {
         this.writeConfigFile();
     }
 
+    private setCustomCommand = (input: string, command: string) => {
+        this.config.customCommands = this.config.customCommands.filter(customCommand => {
+            return customCommand.input !== input;
+        });
+
+        const newCommand: CustomCommand = { input, command};
+        this.config.customCommands.push(newCommand);
+        this.writeConfigFile();
+    }
+
     // Getters
 
     private getGithubPersonalAccessToken = (): string =>  {
         this.readConfigFile();
         return this.config.wgit.githubPersonalAccessToken;
+    }
+
+    private getCustomCommands = (): CustomCommand[] => {
+        this.readConfigFile();
+        return this.config.customCommands;
+    }
+
+    // Deletors
+
+    public unsetCommand(input: string) {
+        this.config.customCommands = this.config.customCommands.filter(customCommand => {
+            return customCommand.input !== input;
+        });
+
+        this.writeConfigFile();
     }
 }
