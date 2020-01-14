@@ -15,7 +15,7 @@ export class CommandUtil {
             return possibleCommand.string;
         });
         if (!command) {
-            console.log(CommandUtil.getUnknownCommandString(possibleCommandStrings));
+            console.log(CommandUtil.getUnknownCommandString(possibleCommands));
             process.exit();
         }
     
@@ -29,11 +29,11 @@ export class CommandUtil {
         });
     
         if (matches.length <= 0) {
-        console.log(CommandUtil.getUnknownCommandString(possibleCommandStrings));
-        process.exit();
+            console.log(CommandUtil.getUnknownCommandString(possibleCommands));
+            process.exit();
         } else if (matches.length > 1) {
-        console.log(chalk.red('Error: Ambiguous command. Did you mean [ ' + chalk.white(matches.toString().replace(/,/g, ', ')) + ' ] ?'));
-        process.exit();
+            console.log(chalk.blue('Ambiguous command. Did you mean [ ' + chalk.white(matches.toString().replace(/,/g, ', ')) + ' ] ?'));
+            process.exit();
         }
     
         const matchingCommand = possibleCommands.find(possibleCommand => {
@@ -43,8 +43,15 @@ export class CommandUtil {
         return matchingCommand;
     }
 
-    public static getUnknownCommandString(commands: string[]) {
-        return `Try one of the following: [ ${commands.toString().replace(/,/g, ', ')} ]`;
+    public static getUnknownCommandString(commands: Command[]) {
+        let unknownCommandString = chalk.blue('Unknown Command. Try one of the following:\n\n');
+        commands.forEach((command, index) => {
+            unknownCommandString += chalk.yellow(command.usage + '\n');
+            unknownCommandString += chalk.white('(' + command.description + ')');
+
+            if (index !== commands.length - 1) { unknownCommandString += '\n\n'; }
+        });
+        return unknownCommandString;
     }
 
     public static validateArguments(args: string[], minArgs: number, maxArgs: number, regex: RegExp[] = []) : boolean {
