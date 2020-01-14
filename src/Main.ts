@@ -137,7 +137,7 @@ export default class Main {
 
     private lsRecursive = async (args: string[], command: Command) => {
         let path = args[0];
-        if (!path || args[0].toLowerCase() === '-r') {
+        if (!path || path.toLowerCase() === '-r') {
             path = '.';
         }
     
@@ -155,7 +155,9 @@ export default class Main {
         console.log(this.getDirContentString(contents, path).replace(/    /g, ''));
         console.log(chalk.grey("——————————————————————————————"));
         const selection = await ConsoleUtil.getInputFromList('Select a new path:', directories);
-        this.lsRecursive([`${args[0]}/${selection}`, '-r'], command);
+        const nextPath = `${path}/${selection}`;
+        console.log(chalk.yellow(nextPath));
+        this.lsRecursive([nextPath, '-r'], command);
 
     }
 
@@ -217,7 +219,11 @@ export default class Main {
     }
 
     private isDirectory(path: string) {
-        return this.fileOrDirectoryExists(path) && fs.lstatSync(path).isDirectory();
+        try {
+            return this.fileOrDirectoryExists(path) && fs.lstatSync(path).isDirectory();
+        } catch (error) {
+            return false;
+        }
     }
 
     private fileOrDirectoryExists(path: string) {
@@ -381,6 +387,19 @@ export default class Main {
         {
             string: 'unset',
             function: this.unset,
+            usage: `wk unset <keyword>`,
+            description: `Removes a shortcut keyword defined with the 'wk set' command.`
+        },
+        {
+            string: 'test',
+            function: () => {
+                process.stdout.write("Hello, World" + "\nTEST");
+                // process.stdout.clearLine();
+                process.stdout.cursorTo(0);
+                process.stdout.clearLine(null);
+                // process.stdout.write("Hello, ASIAN");
+                process.stdout.write("\n"); // end the line
+            },
             usage: `wk unset <keyword>`,
             description: `Removes a shortcut keyword defined with the 'wk set' command.`
         },
