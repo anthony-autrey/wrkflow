@@ -15,58 +15,88 @@ export default class Main {
     }
 
     private ls = (args: string[], command: Command) => {
-        if (!CommandUtil.validateArguments(args, 0, 1)) {
+        if (!CommandUtil.validateArguments(args, 0, 2)) {
             ConsoleUtil.logInvalidArgumentsError(command);
             return;
         }
 
+        if (args[0] && args[0].toLowerCase() === '-r' || (args[1] && args[1].toLowerCase() === '-r')) {
+            this.lsRecursive(args, command);
+            return;
+        }
+
         let path = args[0];
-        if (!path) {
+        if (!path || args[0].toLowerCase() === '-r') {
             path = '.';
         }
+
+        if (!this.isDirectory(path)) {
+            console.log(chalk.red(`Error: that path doesn't exist`));
+            return;
+        } 
     
-        if (args.length > 1) {
-            console.log('Error: Too many arguments.');
-        } else {
-          const tree: any[] = [];
-          const files: string[] = [];
-          const contents = fs.readdirSync(path, "ascii");
-          contents.forEach(element => {
+        const tree: any[] = [];
+        const files: string[] = [];
+        const contents = fs.readdirSync(path, "ascii");
+        contents.forEach(element => {
             if (this.isDirectory(`${path}/${element}`)) {
-              const directoryContents = fs.readdirSync(`${path}/${element}`, "ascii");
-              tree.push({
+                const directoryContents = fs.readdirSync(`${path}/${element}`, "ascii");
+                tree.push({
                 name: element,
                 contents: directoryContents
-              });
+                });
             } else {
-              files.push(element);
+                files.push(element);
             }
-          });
-    
-          tree.forEach(element => {
+        });
+
+        tree.forEach(element => {
             if (element.contents) {
-              let dashString = " ";
-              for (let i = 0; i < 25 - element.name.length; i ++) {
-                dashString += "—";
-              }
+                let dashString = " ";
+                for (let i = 0; i < 25 - element.name.length; i ++) {
+                    dashString += "—";
+                }
 
-              if (this.isHidden(`${path}/${element.name}`)) {
-                console.log(this.styleAsHidden(element.name + dashString));
-              } else {
-                  console.log(chalk.blueBright(element.name + dashString));
-              }
+                if (this.isHidden(`${path}/${element.name}`)) {
+                    console.log(this.styleAsHidden(element.name + dashString));
+                } else {
+                    console.log(chalk.blueBright(element.name + dashString));
+                }
 
-              console.log(chalk.blueBright('    ') + this.getDirContentString(element.contents, `${path}/${element.name}`));
+                console.log('    ' + this.getDirContentString(element.contents, `${path}/${element.name}`));
             } else {
                 console.log(this.isHidden(element.name) ? this.styleAsHidden(element.name): element.name);
             }
-          });
-    
-          if (files.length > 0) {
-              console.log("——————————————————————————");
-              console.log(this.getFilesString(files));
-          }
+        });
+
+        if (files.length > 0) {
+            console.log("——————————————————————————————");
+            console.log(this.getFilesString(files));
         }
+    }
+
+    private lsRecursive = async (args: string[], command: Command) => {
+        let path = args[0];
+        if (!path || args[0].toLowerCase() === '-r') {
+            path = '.';
+        }
+    
+        if (!this.isDirectory(path)) {
+            console.log(chalk.red(`Error: that path doesn't exist`));
+            return;
+        } 
+
+        const tree: any[] = [];
+        const files: string[] = [];
+        const contents = fs.readdirSync(path, "ascii");
+        const directories = contents.filter(element => this.isDirectory(`${path}/${element}`));
+        directories.unshift('..');
+        console.log(chalk.grey("——————————————————————————————"));
+        console.log(this.getDirContentString(contents, path).replace(/    /g, ''));
+        console.log(chalk.grey("——————————————————————————————"));
+        const selection = await ConsoleUtil.getInputFromList('Select a new path:', directories);
+        this.lsRecursive([`${args[0]}/${selection}`, '-r'], command);
+
     }
 
     private isHidden = (path: string): boolean => {
@@ -127,7 +157,11 @@ export default class Main {
     }
 
     private isDirectory(path: string) {
-        return fs.lstatSync(path).isDirectory();
+        return this.fileOrDirectoryExists(path) && fs.lstatSync(path).isDirectory();
+    }
+
+    private fileOrDirectoryExists(path: string) {
+        return fs.existsSync(path);
     }
 
     private http = async (args: string[], command: Command) => {
@@ -257,7 +291,7 @@ export default class Main {
         {
             string: 'ls',
             function: this.ls,
-            usage: `wk ls '<directory path (optional)>'`,
+            usage: `wk ls <directory path (optional)> -r (recursively traverse directories with prompt)`,
             description: `Shows the files and directories in the path given. If a path is not given, the current directory is shown.`
         },
         {

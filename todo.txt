@@ -9,6 +9,6 @@ Ideas:
   Main:
     Ask: if no results, no 'No related topics'
 
-    ls: allow for traversal like ask
+    ls: fix error with fs.lstat permission
   General:
     Create shortcut addition tool: 'wk set' and 'wk unset'
