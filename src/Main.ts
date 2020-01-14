@@ -2,6 +2,7 @@ import axios from 'axios';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import stringLength from 'string-length';
+import { terminal } from 'terminal-kit';
 import { Command, CommandUtil } from './Utilities/CommandUtil';
 import { ConfigUtil } from './Utilities/ConfigUtil';
 import { ConsoleUtil } from './Utilities/ConsoleUtil';
@@ -37,6 +38,13 @@ export default class Main {
             ConsoleUtil.logInvalidArgumentsError(command);
             return;
         }
+
+        const defaultCommands = this.commands.map(defaultCommand => defaultCommand.string);
+        if (defaultCommands.includes(args[0])) {
+            console.log(chalk.red(`'${chalk.yellow('wk ' + args[0])}' is a default command. Please choose a different keyword.`));
+            return;
+        }
+
         const customCommand = args.splice(1, args.length - 1).join(' ');
         this.config.set.customCommand(args[0], customCommand);
         console.log('Set custom command: ' + chalk.yellow('wk ' + args[0]));
@@ -141,23 +149,77 @@ export default class Main {
             path = '.';
         }
     
-        if (!this.isDirectory(path)) {
-            console.log(chalk.red(`Error: that path doesn't exist`));
-            return;
-        } 
+        let directories: string[] = [];
+        const getDirContents = () => {
+            console.log(chalk.yellow(path));
+            if (!this.isDirectory(path)) {
+                console.log(chalk.red(`Error: that path doesn't exist`));
+                process.exit();
+            } else {
+                let allContents = fs.readdirSync(path, "ascii");
+                directories = allContents.filter(element => this.isDirectory(`${path}/${element}`));
+                const files: string[] = allContents.filter(element => !directories.includes(element));
+                directories.unshift('..');
+                allContents = directories.concat(files);
+                return allContents;
+            }
 
-        const tree: any[] = [];
-        const files: string[] = [];
-        const contents = fs.readdirSync(path, "ascii");
-        const directories = contents.filter(element => this.isDirectory(`${path}/${element}`));
-        directories.unshift('..');
-        console.log(chalk.grey("——————————————————————————————"));
-        console.log(this.getDirContentString(contents, path).replace(/    /g, ''));
-        console.log(chalk.grey("——————————————————————————————"));
-        const selection = await ConsoleUtil.getInputFromList('Select a new path:', directories);
-        const nextPath = `${path}/${selection}`;
-        console.log(chalk.yellow(nextPath));
-        this.lsRecursive([nextPath, '-r'], command);
+            return [];
+        };
+
+        let contents = getDirContents();
+        const printDir = (index: number, clear?: boolean) => {
+            const dirContentString = this.getDirContentString(contents, path, index).replace(/    /g, '');
+            if (clear) {
+                const lineCount = dirContentString.split('\n').length;
+                terminal.up(lineCount + 2);
+                terminal.eraseDisplayBelow();
+            }
+            console.log(chalk.grey("——————————————————————————————"));
+            console.log(dirContentString);
+            console.log(chalk.grey("——————————————————————————————"));
+        };
+        const next = () => {
+            const selection = contents[selectedDirectoryIndex];
+            path = `${path}/${selection}`;
+            selectedDirectoryIndex = 0;
+            contents = getDirContents();
+            printDir(0);
+        };
+        let selectedDirectoryIndex = 0;
+        printDir(selectedDirectoryIndex);
+
+        const goLeft = () => {
+            if (selectedDirectoryIndex > 0) {
+                selectedDirectoryIndex --;
+            } else {
+                selectedDirectoryIndex = directories.length - 1;
+            }
+            printDir(selectedDirectoryIndex, true);
+        };
+
+        const goRight = () => {
+            if (selectedDirectoryIndex < directories.length - 1) {
+                selectedDirectoryIndex ++;
+            } else {
+                selectedDirectoryIndex = 0;
+            }
+            printDir(selectedDirectoryIndex, true);
+        };
+
+        terminal.grabInput(true);
+        terminal.on( 'key' , (key: any, matches: any, data: any) => {
+            switch ( key )
+            {
+                case 'LEFT' : goLeft(); break ;
+                case 'RIGHT': goRight(); break ;
+                case 'ENTER' : next(); break ;
+                case 'CTRL_C' : process.exit() ; break ;
+                default: break ;
+            }
+        } ) ;
+
+        // this.lsRecursive([nextPath, '-r'], command);
 
     }
 
@@ -169,16 +231,16 @@ export default class Main {
         return chalk.grey(str);
     }
 
-    private getDirContentString(contents: string[], parent: string) {
+    private getDirContentString(contents: string[], parent: string, selectedIndex?: number) {
         const directories: any[] = [];
         const files: string[] = [];
-        contents.forEach(element => {
+        contents.forEach((element, index) => {
+            const indexMatches: boolean = index === selectedIndex;
             if (this.isDirectory(`${parent}/${element}`)) {
-                const coloredElement = chalk.blueBright(element);
-                directories.push(this.isHidden(element) ? this.styleAsHidden(element): coloredElement);
+                const coloredElement = indexMatches ? chalk.yellow(element) : chalk.blueBright(element);
+                directories.push(this.isHidden(element) && !indexMatches ? this.styleAsHidden(element): coloredElement);
             } else {
                 files.push(element);
-
             }
         });
     
@@ -387,19 +449,6 @@ export default class Main {
         {
             string: 'unset',
             function: this.unset,
-            usage: `wk unset <keyword>`,
-            description: `Removes a shortcut keyword defined with the 'wk set' command.`
-        },
-        {
-            string: 'test',
-            function: () => {
-                process.stdout.write("Hello, World" + "\nTEST");
-                // process.stdout.clearLine();
-                process.stdout.cursorTo(0);
-                process.stdout.clearLine(null);
-                // process.stdout.write("Hello, ASIAN");
-                process.stdout.write("\n"); // end the line
-            },
             usage: `wk unset <keyword>`,
             description: `Removes a shortcut keyword defined with the 'wk set' command.`
         },

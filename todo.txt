@@ -1,13 +1,13 @@
 To Do:
   Deal with ssh vs http for git commands
-  Create shortcut addition tool: 'wk set' and 'wk unset'
 
 Ideas:
   Git:
     On pushall, check branch and set upstream
   Main:
     Ask: if no results, no 'No related topics'
+      bug: 'wk ask restaurants monroe, la' : one green line
+    
+    Notes and Task tracking
 
     ls: fix error with fs.lstat permission
-  General:
-    Create shortcut addition tool: 'wk set' and 'wk unset'
