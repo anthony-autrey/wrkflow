@@ -9,5 +9,3 @@ Ideas:
       bug: 'wk ask restaurants monroe, la' : one green line
     
     Notes and Task tracking
-
-    ls: fix error with fs.lstat permission
