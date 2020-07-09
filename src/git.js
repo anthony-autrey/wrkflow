@@ -123,9 +123,7 @@ async function branchpush(args) {
     process.exit();
   }
 
-  runCommand(`git checkout -b ${branch}`);
-  runCommand(`git add -A && git commit -m "${message}"`);
-  runCommand(`git push -u origin ${branch}`);
+  await runCommand(`git checkout -b ${branch} && git add -A && git commit -m "${message}" && git push -u origin ${branch}`, false);
 }
 
 async function init() {

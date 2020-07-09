@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "local-install": "npm uninstall -g wrkflow && npm link",
     "patch": "npm version patch && npm publish && git push --tags"
   },
   "author": "Anthony Autrey",
