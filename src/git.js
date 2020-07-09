@@ -110,7 +110,6 @@ async function branchpush(args) {
   let branch = args[0] || ``;
   let message = args[1] || ``;
 
-
   if (args.length <= 0) {
       branch = await getInput('Please enter a branch to create:');
       message = await getInput('Please enter a commit message:');
