@@ -52,6 +52,29 @@ export default class Git {
         CommandUtil.runShell(`git add -A && git commit -m "${message}" && git push`);
     }
 
+    private async branchPush(args: string[], command: Command) {
+        if (!CommandUtil.validateArguments(args, 0, 2)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+
+        let branch = args[0] || '';
+        let message = args[1] || '';
+
+        if (args.length <= 0) {
+            branch = await ConsoleUtil.getInput('Please enter a branch name:');
+            message = await ConsoleUtil.getInput('Please enter a commit message:');
+        }
+        if (args.length == 1) {
+            message = await ConsoleUtil.getInput('Please enter a commit message:');
+        }
+        else if (args.length > 2) {
+            message = await ConsoleUtil.getInput('Too many arguments. Please enter a commit message:');
+        }
+
+        CommandUtil.runShell(`git checkout -b ${branch} && git add -A && git commit -m "${message}" && git push -u origin ${branch}`);
+    }
+
     private async deleteTag(args: string[], command: Command) {
         if (!CommandUtil.validateArguments(args, 0, 1)) {
             ConsoleUtil.logInvalidArgumentsError(command);
@@ -269,6 +292,12 @@ export default class Git {
             function: this.pushAll,
             usage: `wgit pushall '<commit message (optional)>'`,
             description: `Stages, commits and pushes all current changes. If a commit message isn't included, a prompt will accept one.`
+        },
+        {
+            string: 'branchpush',
+            function: this.branchPush,
+            usage: `wgit branchpush '<branch name (optional) <commit message (optional)>'`,
+            description: `Helpful for creating pull requests. Stages, commits and pushes all current changes in a new branch. If a commit message isn't included, a prompt will accept one.`
         },
         {
             string: 'init',
