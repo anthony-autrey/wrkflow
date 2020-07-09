@@ -6,6 +6,7 @@ const input = require('inquirer');
 const primaryCommands = [
   'commitall',
   'pushall',
+  'branchpush',
   'init',
   'clone',
   'searchrepos',
@@ -23,6 +24,8 @@ export function cli(systemArgs) {
       commitall(secondaryArgs)
     else if (command == 'pushall')
       pushall(secondaryArgs)
+    else if (command == 'branchpush')
+      branchpush(secondaryArgs)
     else if (command == 'init')
       init()
     else if (command == 'clone')
@@ -101,6 +104,28 @@ async function pushall(args) {
     message = await getInput('Too many arguments. Please enter a commit message:')
 
   runCommand(`git add -A && git commit -m "${message}" && git push`)
+}
+
+async function branchpush(args) {
+  let branch = args[0] || ``;
+  let message = args[1] || ``;
+
+
+  if (args.length <= 0) {
+      branch = await getInput('Please enter a branch to create:');
+      message = await getInput('Please enter a commit message:');
+  }
+  if (args.length == 1 ) {
+      message = await getInput('Please enter a commit message:');
+  }
+  else if (args.length > 2) {
+    console.log('Error: Too many arguments.');
+    process.exit();
+  }
+
+  runCommand(`git checkout -b ${branch}`);
+  runCommand(`git add -A && git commit -m "${message}"`);
+  runCommand(`git push -u origin ${branch}`);
 }
 
 async function init() {
