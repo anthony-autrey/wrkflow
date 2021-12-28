@@ -191,6 +191,16 @@ export default class Git {
         }
     }
 
+    private yank = async (args: string[], command: Command) =>  {
+        if (!CommandUtil.validateArguments(args, 0, 0)) {
+            ConsoleUtil.logInvalidArgumentsError(command);
+            return;
+        }
+        
+        CommandUtil.runShell(`git pull`);
+        return;
+    }
+
     private searchRepos = async (args: string[], command: Command) => {
         if (!CommandUtil.validateArguments(args, 0, 1000)) {
             ConsoleUtil.logInvalidArgumentsError(command);
@@ -304,6 +314,12 @@ export default class Git {
             function: this.init,
             usage: `wgit init '<name (optional)> '<description (optional)>'`,
             description: 'Creates a new GitHub repo and clones it in the current directory. (Requires GitHub Personal Access Token).'
+        },
+        {
+            string: 'yank',
+            function: this.yank,
+            usage: `wgit yank'`,
+            description: 'Yanks the latest changes from your current branch.'
         },
         {
             string: 'clone',

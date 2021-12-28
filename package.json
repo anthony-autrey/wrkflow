@@ -9,13 +9,15 @@
   ],
   "bin": {
     "wgit": "bin/wgit",
+    "tsk": "bin/tsk",
     "wk": "bin/wk"
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "preversion": "npm run build",
-    "patch": "npm version patch && npm publish && git push --tags"
+    "patch": "npm version patch && npm publish && git push --tags",
+    "local-install": "npm uninstall -g wrkflow && npm run build && npm link"
   },
   "author": "Anthony Autrey",
   "license": "ISC",
@@ -23,10 +25,10 @@
     "axios": "^0.19.1",
     "chalk": "~3.0.0",
     "esm": "~3.2.25",
-    "inquirer": "^7.0.3",
+    "inquirer": "^7.3.3",
     "string-length": "~3.1.0",
-    "typescript": "^3.7.4",
-    "terminal-kit": "^1.32.3"
+    "terminal-kit": "^1.32.3",
+    "typescript": "^3.7.4"
   },
   "devDependencies": {
     "@types/inquirer": "^6.5.0",

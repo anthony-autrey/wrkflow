@@ -49,9 +49,9 @@ export class CommandUtil {
         let unknownCommandString = chalk.blue('Unknown Command. Try one of the following:\n\n');
         commands.forEach((command, index) => {
             unknownCommandString += chalk.yellow(command.usage + '\n');
-            unknownCommandString += chalk.white(command.description);
+            unknownCommandString += chalk.white(`   ${command.description}`);
 
-            if (index !== commands.length - 1) { unknownCommandString += '\n\n'; }
+            if (index !== commands.length - 1) { unknownCommandString += '\n'; }
         });
         return unknownCommandString;
     }

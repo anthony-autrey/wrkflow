@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+/* tslint:disable */
+const req = require('esm')(module);
+const Task = req('../dist/Task').default;
+new Task().handleSystemArguments(process.argv);

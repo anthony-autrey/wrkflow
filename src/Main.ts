@@ -219,8 +219,6 @@ export default class Main {
             }
         } ) ;
 
-        // this.lsRecursive([nextPath, '-r'], command);
-
     }
 
     private isHidden = (path: string): boolean => {
@@ -404,8 +402,8 @@ export default class Main {
         }
         console.log(chalk.green('\n——————————————————————————————————————————————————————————————————————————————'));
         if (relatedTopics.length > 0) {
-            let newQuestion = await ConsoleUtil.getInputFromList(chalk.reset.yellow('Select a related topic:'),relatedTopics);
-            if (newQuestion.toLowerCase() === query.toLowerCase()) { newQuestion = newQuestion + ' wikipedia';}
+            let newQuestion = await ConsoleUtil.getInputFromList(chalk.reset.yellow('Select a related topic:'), relatedTopics);
+            if (newQuestion.toLowerCase() === query.toLowerCase()) { newQuestion = newQuestion + ' wikipedia'; }
             this.ask(newQuestion.split(' '), command);
         } else if (response.data.Type) {
             console.log(chalk.gray('No related topics found'));
