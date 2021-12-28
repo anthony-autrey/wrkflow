@@ -16,7 +16,7 @@
     "build": "rm -rf dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "preversion": "npm run build",
-    "patch": "npm version patch && npm publish && git push --tags",
+    "patch": "npm version patch --force && npm publish && git push --tags",
     "local-install": "npm uninstall -g wrkflow && npm run build && npm link"
   },
   "author": "Anthony Autrey",
